@@ -1,8 +1,10 @@
-# 👻 ra1n's Notes 😈
-## $ whoami
-1. Cybersecurity Student | CTF Newblood
-2. Penetration Testing Enthusiast
-3. Obsessive Note-Taker
+# [👻 ra1n@notes ~]$ whoami  
+│   * Cybersecurity Padawan     
+│   * CTF Newblood             
+│   * Pentest Enthusiast       
+│   * Professional Note-Hoarder
 
-# 📬 Contact
+# [📬 ra1n@notes ~]$ Contact
 MTIxNTEyNTYxM0BxcS5jb20K
+
+# [🥴 ra1n@notes ~]$ rm -rf *
