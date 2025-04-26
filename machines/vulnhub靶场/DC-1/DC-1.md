@@ -398,3 +398,12 @@ thefinalflag.txt
 
 
 ![image-20250308201114088](./assets/image-20250308201114088.png)
+
+
+# 二次复盘
+
+发现是drupal CMS，7.0版本，searchsploit查找相关漏洞，有一个sql注入添加admin账户的exp，添加admin账户，登录后台
+
+添加php插件
+
+content写入php反弹shell脚本，然后find提权即可
