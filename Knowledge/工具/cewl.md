@@ -34,7 +34,9 @@ cewl <url>
 cewl <url> -w <文件名>
 ```
 
-
+```
+cewl <url> >> <文件名>
+```
 
 
 
